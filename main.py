@@ -85,6 +85,6 @@ while True:
     if result == True:
         oled.fill(0)
         oled.text("kitty dead...", 3, 10)
-        oled.text("wtf...", 3, 25)
+        oled.text("shibal.", 3, 25)
         oled.show()
         time.sleep(4)
