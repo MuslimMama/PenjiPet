@@ -1,72 +1,56 @@
-from machine import *
+from machine import Pin, I2C, PWM
 import sh1106
 import framebuf
 import time
 import penjipal
+import gc
+import menu
+import blinker
 
-pal = penjipal.penjiPal(20)
-##make pal with 20 hp
+pal = penjipal.penjiPal(26)
+init_life = pal.get_life()
+life_bar = 128
 
+# Setup I2C for OLED display (SH1106)
+i2c = I2C(0, scl=Pin(17), sda=Pin(16), freq=800_000)
 
+# PWM setup, max duty cycle at 2^16 or 655356
+volts = machine.Pin(0) # pin zero is on the very top left
+volts_pwm = PWM(volts)
+volts_pwm.freq(1000)
+volts_pwm.duty_u16(65535) #100% duty cycle
 
-i2c = I2C(0, scl=Pin(1), sda=Pin(0), freq=800000)
-##display with higher frequency 
-oled = sh1106.SH1106_I2C(128, 64, i2c, res=Pin(2), addr=0x3c, delay = 100)
-##initialize display as oled
-button = Pin(15, Pin.IN, Pin.PULL_UP)
-##button object
+# Initialize SH1106 OLED display (128x64), address 0x3C
+oled = sh1106.SH1106_I2C(128, 64, i2c, res=Pin(2), addr=0x3C, delay=100)
 
+# Setup button input on GPIO 18 with internal pull-up resistor
+button = Pin(18, Pin.IN, Pin.PULL_UP)
+menubutton = Pin(19, Pin.IN, Pin.PULL_UP)
 
-kitty = framebuf.FrameBuffer(pal.get_cat(), 128, 64, framebuf.MONO_HLSB)
+# Load sprites into framebuffers
+kitty = pal.get_cat_fb()
+kittycough = pal.get_cough_fb()
+kittycough2 = pal.get_cough2_fb()
 
-kittycough = framebuf.FrameBuffer(pal.get_cough(), 128, 64, framebuf.MONO_HLSB)
-
-    
-kittycough2 = framebuf.FrameBuffer(pal.get_cough2(), 128, 64, framebuf.MONO_HLSB)
-##sprites for cat and cough animations
-
+# Clear OLED display and initialize counters
 oled.fill(0)
 counter = 0
 
-
-life_bar = 128
-init_life = pal.get_life()
+# Main game loop
 while True:
-    oled.hline(0,0,life_bar,1)
-    oled.hline(0,1,life_bar,1)
-    oled.hline(0,2,life_bar,1)
-    ##displays life bar
-    oled.text("boof",0,4)
-    oled.text("bar",0,10)
-    oled.show()
+   
+    # if we press the menu button, it loops us in the menu until we back out and break
+    menu.menu()
     
-    #display boof bar, to be replaced eventually
-
-
-    if button.value()== 0: #check for button press
-        counter += 1 ## counter for cough animation
-        pal.update_life() # decrease life when button is pressed
-        life_bar = 128 * (pal.get_life() / init_life)
-        life_bar = int(life_bar)
-        
-        if counter%2 == 0:
-            
-            oled.blit(kittycough, 0, 0)
-            
-            time.sleep(0.5)
-            
-        else:
-            
-            oled.blit(kittycough2, 0, 0)
-            time.sleep(0.5)
-            
-    else:
-        
-        oled.blit(kitty, 0, 0)
-    if pal.get_life() <= 0:
-        break
-oled.fill(0)
-oled.text("kitty dead", 40, 32)
-oled.show()
+    gc.collect()
     
+    # if u hit a whole ass blinker it get a True result into result and shows the kitty dead screen
+    result = blinker.blinker(kitty, kittycough, kittycough2, life_bar)
+
+    if result == True:
+        oled.fill(0)
+        oled.text("kitty dead...", 3, 10)
+        oled.text("shibal.", 3, 25)
+        oled.show()
+        time.sleep(4)
 
