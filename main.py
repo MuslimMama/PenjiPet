@@ -24,8 +24,9 @@ volts_pwm.duty_u16(65535) #100% duty cycle
 oled = sh1106.SH1106_I2C(128, 64, i2c, res=Pin(2), addr=0x3C, delay=100)
 
 # Setup button input on GPIO 18 with internal pull-up resistor
-button = Pin(18, Pin.IN, Pin.PULL_UP)
+penbutton = Pin(18, Pin.IN, Pin.PULL_UP)
 menubutton = Pin(19, Pin.IN, Pin.PULL_UP)
+selectbutton = Pin(20, Pin.IN, Pin.PULL_UP)
 
 # Load sprites into framebuffers
 kitty = pal.get_cat_fb()
