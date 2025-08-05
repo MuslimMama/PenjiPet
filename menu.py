@@ -8,8 +8,6 @@ menubutton = Pin(19, Pin.IN, Pin.PULL_UP)
 i2c = I2C(0, scl=Pin(17), sda=Pin(16), freq=800_000)
 oled = sh1106.SH1106_I2C(128, 64, i2c, res=Pin(2), addr=0x3C, delay=100)
 
-
-
 def menu():
     
     checker = False
